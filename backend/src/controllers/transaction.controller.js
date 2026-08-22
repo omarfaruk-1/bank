@@ -1,9 +1,11 @@
 import transactionModel from "../models/transaction.model.js";
-import accountModel from "../models/account.model.js"
+import accountModel from "../models/account.model.js";
+import ledgerModel from "../models/ledger.model.js";
+import mongoose from "mongoose";
 
 async function createTransaction(req,res){
     try {
-        const {fromAccount,toAccount,amount,idempotencyKey}=req.body;
+        const {fromAccount, toAccount, amount, idempotencyKey}=req.body;
         if(!fromAccount || !toAccount || !amount || !idempotencyKey){
             return res.status(400).json({
                 message:"FromAccount, toAccount, amount, idempotencyKey all are required"
@@ -42,7 +44,7 @@ async function createTransaction(req,res){
             }
         }
 
-        if(fromUserAccount.status!=="active" || toUserAccount.status!=="active"){
+        if(fromUserAccount.status !== "active" || toUserAccount.status !== "active"){
             return res.status(400).json({
                 message:"Both accounts must be active to perform transaction"
             })
@@ -57,7 +59,8 @@ async function createTransaction(req,res){
 
         const session = await mongoose.startSession();
         session.startTransaction();
-        const newTransaction = await transactionModel.create({
+        
+        const transaction = await transactionModel.create({
             fromAccount,
             toAccount,
             amount,
@@ -93,7 +96,10 @@ async function createTransaction(req,res){
         });
 
     } catch (error) {
-        
+        return res.status(500).json({
+            message:"Internal server error",
+            error:error.message
+        })
     }
 }
 
